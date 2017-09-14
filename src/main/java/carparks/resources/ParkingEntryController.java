@@ -12,17 +12,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-class FeesController {
+class ParkingEntryController {
+	
+	// -------- More endpoints provided by Spring Data REST --------- //
 	
 	// --------------- Retrieve a parking record --------------------- //
-	@GetMapping(value = "/parking/{id}")
-	public ResponseEntity<?> getParking(@PathVariable("id") long id) {
+	@GetMapping(value = "/{plateNumber}/{entryId}")
+	public ResponseEntity<?> getParking(@PathVariable("plateNumber") String plateNumber,
+										@PathVariable("entryId") long id) {
 		return new ResponseEntity<Long>(id, HttpStatus.OK);
 	}
 	
 	// --------------- Create a parking entity ---------------------- //
-	@PostMapping(value = "/parking")
-	public ResponseEntity<?> createParking(@RequestBody String plateNumber) {
+	@PostMapping(value = "/{plateNumber}/parking")
+	public ResponseEntity<?> createParking( @PathVariable("plateNumber") String plateNumber,
+											@RequestBody String type) {
 //		HttpHeaders headers = new HttpHeaders();
 //        headers.setLocation(ucBuilder.path("/fee/{id}").buildAndExpand(fee.getId()).toUri());
 //        return new ResponseEntity<String>(headers, HttpStatus.CREATED);
@@ -31,8 +35,9 @@ class FeesController {
 	}
 	
 	// -------------- Update a parking entity ------------------------ //
-	@PutMapping(value = "/parking/{id}")
-	public ResponseEntity<?> updateParking(@PathVariable("id") long id) {
+	@PutMapping(value = "/{plateNumber}/{entryId}")
+	public ResponseEntity<?> updateParking(@PathVariable("plateNumber") String plateNumber,
+										   @PathVariable("id") long id) {
 		return new ResponseEntity<String>("new fee", HttpStatus.CREATED);
 	}
 	
