@@ -41,8 +41,8 @@ class ParkingEntryController {
 		return new ResponseEntity<String>("new fee", HttpStatus.CREATED);
 	}
 	
-	// ---- Retrieve the sum of all fees in a given day ---- //
-	@GetMapping(value = "/fees")
+	// ---- Retrieve the summary of all fees in a given day ---- //
+	@GetMapping(value = "/summary")
 	public ResponseEntity<?> getFeesSum(@RequestBody LocalDate date) {
 		return new ResponseEntity<String>("sum", HttpStatus.OK);
 	}
