@@ -24,20 +24,46 @@ class ParkingEntry {
 	private String plateNumber;
 	
 	@Column(name = "start")
-	private LocalDate start;
+	private LocalDateTime start;
 	
 	@Column(name = "finish")
-	private LocalDate finish;
+	private LocalDateTime finish;
 	
 	@Column(name = "fee")
 	private BigDecimal fee;
 
 	public ParkingEntry(String plateNumber) {
 		this.plateNumber = plateNumber;
+		this.start = LocalDateTime.now();
+		this.finish = null;
 	}
 	
 	// no-argument package-scope constructor for Hibernate
 	ParkingEntry() {}
+
+	public LocalDateTime getFinish() {
+		return finish;
+	}
+
+	public void setFinish(LocalDateTime finish) {
+		this.finish = finish;
+	}
+
+	public BigDecimal getFee() {
+		return fee;
+	}
+
+	public void setFee(BigDecimal fee) {
+		this.fee = fee;
+	}
+
+	public LocalDateTime getStart() {
+		return start;
+	}
+
+	public String getPlateNumber() {
+		return plateNumber;
+	}
 	
 	
 	
