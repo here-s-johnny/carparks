@@ -73,7 +73,9 @@ class ParkingEntry {
 		return feeType;
 	}
 	
-	
+	public boolean isFinished() {
+		return finish != null;
+	}
 	
 
 }

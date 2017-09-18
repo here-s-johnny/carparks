@@ -177,7 +177,7 @@ public class ParkingService {
 
 		List<ParkingEntry> entries = parkingDao.findByPlateNumber(plateNumber);
 
-		return entries.stream().filter(e -> (e.getFinish() != null))
+		return entries.stream().filter(ParkingEntry::isFinished)
 				.collect(Collectors.toList());
 	}
 	

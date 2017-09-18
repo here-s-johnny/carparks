@@ -12,28 +12,30 @@ class FeeCalculator {
 	public BigDecimal calculateFee(ParkingEntry entry) {
 
 		Duration duration = Duration.between(entry.getStart(), entry.getFinish());
-		long hours = ((duration.getSeconds() % 3600) == 0) ? duration.getSeconds() / 3600
-				: duration.getSeconds() / 3600 + 1;
+		
+		long durationInHours = duration.getSeconds() / 3600;
+		
+		// if the duration is even one second longer than the full hour
+		// we want to add fee for the next started hour
+		long hours = ((duration.getSeconds() % 3600) == 0) ? durationInHours
+				: durationInHours + 1;
 		
 		BigDecimal sum = new BigDecimal(0);
-		BigDecimal hourFee;
-		BigDecimal multiplier;
-		int i;
+		FeeSettings settings;
 
 		if (entry.getFeeType() == FeeType.REGULAR) {
-			hourFee  = new BigDecimal(1);
-			multiplier = new BigDecimal(2);
-			i = 0;
+			settings = new FeeSettings(0, new BigDecimal(2), new BigDecimal(1));
 		} else {
-			hourFee  = new BigDecimal(2);
-			multiplier = new BigDecimal(1.5);
-			i = 1;
+			settings = new FeeSettings(1, new BigDecimal(1.5), new BigDecimal(2));
 		}
 		
-		while (i < hours) {
+		BigDecimal hourFee = settings.getHourFee();
+		BigDecimal multiplier = settings.getMultiplier();
+		int hour = settings.getFirstChargedHour();
+		
+		for (int i = hour; i < hours; ++i) {
 			sum = sum.add(hourFee);
 			hourFee = hourFee.multiply(multiplier);
-			++i;
 		}
 
 		return sum.setScale(2, BigDecimal.ROUND_HALF_UP);
@@ -42,11 +44,7 @@ class FeeCalculator {
 
 	public BigDecimal calculateDailyTurnover(List<ParkingEntry> entries) {
 
-		BigDecimal sum = new BigDecimal(0);
-		
-		for (ParkingEntry e : entries) {
-			sum = sum.add(e.getFee());
-		}
+		BigDecimal sum = entries.stream().map(entry -> entry.getFee()).reduce(BigDecimal.ZERO, BigDecimal::add);
 		
 		return sum.setScale(2, BigDecimal.ROUND_HALF_UP);
 	}
