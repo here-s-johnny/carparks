@@ -12,7 +12,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class RegularFeeCalculatorShould {
+public class FeeCalculatorShould {
 
 	private ParkingEntry testedEntry;
 	private BigDecimal expectedResult;
@@ -23,7 +23,7 @@ public class RegularFeeCalculatorShould {
 		feeCalculator = new FeeCalculator();
 	}
 
-	public RegularFeeCalculatorShould(ParkingEntry testedEntry, BigDecimal expectedResult) {
+	public FeeCalculatorShould(ParkingEntry testedEntry, BigDecimal expectedResult) {
 		this.testedEntry = testedEntry;
 		this.expectedResult = expectedResult;
 	}
