@@ -1,4 +1,4 @@
-package carparks.resources;
+package carparks.parking;
 
 import java.math.BigDecimal;
 

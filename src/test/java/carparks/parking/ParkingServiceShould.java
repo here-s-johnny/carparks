@@ -26,9 +26,12 @@ public class ParkingServiceShould {
 
 	@Mock
 	private FeeCalculator feeCalculator;
+	
+	@Mock
+	private List<CurrencyConverter> converters;
 
 	@InjectMocks
-	private ParkingService parkingService = new ParkingService(parkingDao, feeCalculator);
+	private ParkingService parkingService = new ParkingService(parkingDao, feeCalculator,converters);
 
 	@Before
 	public void setupMock() {
@@ -166,6 +169,7 @@ public class ParkingServiceShould {
 
 		// given
 		String plate = "WF12345";
+		String currency = "PLN";
 		ParkingEntry entry = new ParkingEntry(plate, FeeType.REGULAR);
 		entry.setFinish(LocalDateTime.now());
 		entry.setFee(new BigDecimal(10));
@@ -173,7 +177,7 @@ public class ParkingServiceShould {
 		when(parkingDao.findById(anyInt())).thenReturn(entry);
 
 		// when
-		ParkingEntryDto feeObject = parkingService.getFee(id);
+		ParkingEntryDto feeObject = parkingService.getEntry(id, currency);
 
 		// then
 		assertEquals(feeObject.getFee(), new BigDecimal(10));
@@ -187,6 +191,7 @@ public class ParkingServiceShould {
 
 		// given
 		String plate = "WF12345";
+		String currency = "PLN";
 		ParkingEntry entry = new ParkingEntry(plate, FeeType.REGULAR);
 		entry.setFinish(LocalDateTime.now());
 		entry.setFee(new BigDecimal(10));
@@ -194,7 +199,7 @@ public class ParkingServiceShould {
 		when(parkingDao.findByPlateNumber(any())).thenReturn(entries);
 
 		// when
-		ParkingEntryDto feeObject = parkingService.getFee(plate);
+		ParkingEntryDto feeObject = parkingService.getEntry(plate, currency);
 
 		// then
 		assertEquals(feeObject.getFee(), new BigDecimal(10));
@@ -208,13 +213,15 @@ public class ParkingServiceShould {
 
 		// given
 		String plate = "WF12345";
+		String currency = "PLN";
+
 		ParkingEntry entry = new ParkingEntry(plate, FeeType.REGULAR);
 		int id = 12345;
 		when(parkingDao.findById(anyInt())).thenReturn(entry);
 		when(feeCalculator.calculateFee(any())).thenReturn(new BigDecimal(10));
 
 		// when
-		ParkingEntryDto feeObject = parkingService.getFee(id);
+		ParkingEntryDto feeObject = parkingService.getEntry(id, currency);
 
 		// then
 		assertEquals(feeObject.getFee(), new BigDecimal(10));
@@ -228,13 +235,15 @@ public class ParkingServiceShould {
 
 		// given
 		String plate = "WF12345";
+		String currency = "PLN";
+
 		ParkingEntry entry = new ParkingEntry(plate, FeeType.REGULAR);
 		List<ParkingEntry> entries = Arrays.asList(entry);
 		when(parkingDao.findByPlateNumber(any())).thenReturn(entries);
 		when(feeCalculator.calculateFee(any())).thenReturn(new BigDecimal(10));
 
 		// when
-		ParkingEntryDto feeObject = parkingService.getFee(plate);
+		ParkingEntryDto feeObject = parkingService.getEntry(plate, currency);
 
 		// then
 		assertEquals(feeObject.getFee(), new BigDecimal(10));
@@ -248,9 +257,10 @@ public class ParkingServiceShould {
 
 		// given
 		int id = 12345;
+		String currency = "PLN";
 
 		// when
-		parkingService.getFee(id);
+		parkingService.getEntry(id, currency);
 
 	}
 
@@ -259,10 +269,11 @@ public class ParkingServiceShould {
 
 		// given
 		String plate = "WF12345";
+		String currency = "PLN";
 
 		// when
 		try {
-			parkingService.getFee(plate);
+			parkingService.getEntry(plate, currency);
 			fail();
 		} catch(IllegalStateException e) {
 			
@@ -273,11 +284,12 @@ public class ParkingServiceShould {
 	public void return_daily_summary_object_with_default_todays_date() {
 
 		// given
+		String currency = "PLN";
 		when(feeCalculator.calculateDailyTurnover(any())).thenReturn(new BigDecimal(10)).thenReturn(new BigDecimal(15));
 
 
 		// when
-		DailySummaryDto summary = parkingService.getDailySummary(LocalDate.now());
+		DailySummaryDto summary = parkingService.getDailySummary(LocalDate.now(), currency);
 
 		// then
 		assertEquals(summary.getSumRegular(), new BigDecimal(10));
@@ -291,11 +303,12 @@ public class ParkingServiceShould {
 	public void return_daily_summary_object_with_a_given_date() {
 		
 		// given
+		String currency = "PLN";
 		LocalDate date = LocalDate.now().minusWeeks(3);
 		when(feeCalculator.calculateDailyTurnover(any())).thenReturn(new BigDecimal(10)).thenReturn(new BigDecimal(15));
 
 		// when
-		DailySummaryDto summary = parkingService.getDailySummary(date);
+		DailySummaryDto summary = parkingService.getDailySummary(date, currency);
 
 		// then
 		assertEquals(summary.getSumRegular(), new BigDecimal(10));
@@ -308,11 +321,12 @@ public class ParkingServiceShould {
 	public void throw_exception_when_the_data_entered_is_in_the_future() {
 
 		// given
+		String currency = "PLN";
 		LocalDate date = LocalDate.now().plusDays(1);
 
 		// when
 		try {
-			parkingService.getDailySummary(date);
+			parkingService.getDailySummary(date, currency);
 			fail();
 		} catch(IllegalArgumentException e) {
 			

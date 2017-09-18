@@ -17,9 +17,10 @@ public class ParkingService {
 
 	private ParkingDao parkingDao;
 	private FeeCalculator feeCalculator;
+	private List<CurrencyConverter> converters;
 
 	@Autowired
-	public ParkingService(ParkingDao parkingDao, FeeCalculator feeCalculator) {
+	public ParkingService(ParkingDao parkingDao, FeeCalculator feeCalculator, List<CurrencyConverter> converters) {
 		this.parkingDao = parkingDao;
 		this.feeCalculator = feeCalculator;
 	}
@@ -71,37 +72,55 @@ public class ParkingService {
 		}
 	}
 
-	public ParkingEntryDto getFee(String plateNumber) {
+	public ParkingEntryDto getEntry(String plateNumber, String currency){
 
 		List<ParkingEntry> entriesStarted = getStartedSessionsListByPlateNumber(plateNumber);
 
 		if (entriesStarted.size() > 0) {
 			BigDecimal feeSoFar = feeCalculator.calculateFee(entriesStarted.get(0));
+			
+			if (currency != "PLN") {
+				feeSoFar = getConvertedValue(feeSoFar, currency);
+			}
+			
 			return new ParkingEntryDto(plateNumber, feeSoFar, SessionStatus.IN_PROGRESS);
 		}
 		
 		ParkingEntry mostRecent = getMostRecentFinishedSession(plateNumber);
-		return new ParkingEntryDto(plateNumber, mostRecent.getFee(), SessionStatus.FINISHED);
+		BigDecimal fee = mostRecent.getFee();
+		if (currency != "PLN") {
+			fee = getConvertedValue(fee, currency);
+		}
+		return new ParkingEntryDto(plateNumber, fee, SessionStatus.FINISHED);
 
 	}
 
-	public ParkingEntryDto getFee(int id) {
+	public ParkingEntryDto getEntry(int id, String currency) {
 
 		ParkingEntry entry = parkingDao.findById(id);
 
 		if (entry != null) {
 			if (entry.getFinish() == null) {
 				BigDecimal feeSoFar = feeCalculator.calculateFee(entry);
+				
+				if (currency != "PLN") {
+					feeSoFar = getConvertedValue(feeSoFar, currency);
+				}
+				
 				return new ParkingEntryDto(entry.getPlateNumber(), feeSoFar, SessionStatus.IN_PROGRESS);
 			}
-			return new ParkingEntryDto(entry.getPlateNumber(), entry.getFee(), SessionStatus.FINISHED);
+			
+			BigDecimal fee = entry.getFee();
+			if (currency != "PLN") {
+				fee = getConvertedValue(fee, currency);
+			}
+			return new ParkingEntryDto(entry.getPlateNumber(), fee, SessionStatus.FINISHED);
 		}
-		
 		
 		throw new IllegalStateException("This vehicle has never parked");
 	}
 	
-	public DailySummaryDto getDailySummary() {
+	public DailySummaryDto getDailySummary(String currency) {
 		
 		LocalDateTime start = LocalDate.now().atStartOfDay();
 		LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
@@ -112,12 +131,17 @@ public class ParkingService {
 		BigDecimal regularTurnover = feeCalculator.calculateDailyTurnover(regularEntries);
 		BigDecimal vipTurnover = feeCalculator.calculateDailyTurnover(vipEntries);
 		
+		if (currency != "PLN") {
+			regularTurnover = getConvertedValue(regularTurnover, currency);
+			vipTurnover = getConvertedValue(vipTurnover, currency);
+		}
+		
 		return new DailySummaryDto(regularTurnover, vipTurnover);
 		
 	}
 	
 	
-	public DailySummaryDto getDailySummary(LocalDate date) {
+	public DailySummaryDto getDailySummary(LocalDate date, String currency) {
 		
 		if (date.isAfter(LocalDate.now())) {
 			throw new IllegalArgumentException("The given day is in the future");
@@ -131,6 +155,11 @@ public class ParkingService {
 		
 		BigDecimal regularTurnover = feeCalculator.calculateDailyTurnover(regularEntries);
 		BigDecimal vipTurnover = feeCalculator.calculateDailyTurnover(vipEntries);
+		
+		if (currency != "PLN") {
+			regularTurnover = getConvertedValue(regularTurnover, currency);
+			vipTurnover = getConvertedValue(vipTurnover, currency);
+		}
 		
 		return new DailySummaryDto(regularTurnover, vipTurnover);
 		
@@ -157,6 +186,15 @@ public class ParkingService {
 				stream().
 				max(Comparator.comparing(e -> e.getFinish())).
 				orElseThrow(() -> new IllegalStateException("This vehicle has never parked"));
+	}
+	
+	private BigDecimal getConvertedValue(BigDecimal fee, String currency) {
+
+		Optional<CurrencyConverter> converter = converters.stream().filter(c -> c.supports(currency)).findFirst();
+		if (!converter.isPresent()) {
+			throw new IllegalArgumentException("This currency is not supported yet");
+		} else {
+			return converter.get().convert(fee);			}
 	}
 
 }

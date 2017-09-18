@@ -2,10 +2,7 @@ package carparks.parking;
 
 import java.math.BigDecimal;
 
-import org.springframework.stereotype.Component;
-
-//@Component
-class ParkingEntryDto {
+public class ParkingEntryDto {
 
 	private String plateNumber;
 	private BigDecimal fee;
