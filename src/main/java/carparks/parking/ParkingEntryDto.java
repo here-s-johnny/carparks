@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 import org.springframework.stereotype.Component;
 
-@Component
+//@Component
 class ParkingEntryDto {
 
 	private String plateNumber;

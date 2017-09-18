@@ -2,7 +2,7 @@ package carparks.parking;
 
 import java.math.BigDecimal;
 
-class DailySummaryDto {
+public class DailySummaryDto {
 	
 	private BigDecimal sumRegular;
 	private BigDecimal sumVip;

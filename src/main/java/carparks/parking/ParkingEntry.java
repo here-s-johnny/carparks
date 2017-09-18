@@ -23,6 +23,9 @@ class ParkingEntry {
 	@Column(name = "plate_number")
 	private String plateNumber;
 	
+	@Column(name = "type")
+	private FeeType feeType;
+	
 	@Column(name = "start")
 	private LocalDateTime start;
 	
@@ -32,10 +35,11 @@ class ParkingEntry {
 	@Column(name = "fee")
 	private BigDecimal fee;
 
-	public ParkingEntry(String plateNumber) {
+	public ParkingEntry(String plateNumber, FeeType feeType) {
 		this.plateNumber = plateNumber;
 		this.start = LocalDateTime.now();
 		this.finish = null;
+		this.feeType = feeType;
 	}
 	
 	// no-argument package-scope constructor for Hibernate
@@ -65,6 +69,9 @@ class ParkingEntry {
 		return plateNumber;
 	}
 	
+	public FeeType getFeeType() {
+		return feeType;
+	}
 	
 	
 	

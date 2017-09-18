@@ -3,7 +3,7 @@ package carparks.parking;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +24,7 @@ public class ParkingService {
 		this.feeCalculator = feeCalculator;
 	}
 
-	public ParkingEntryDto tryToCreateParkingEntry(String plateNumber) {
+	public ParkingEntryDto tryToCreateParkingEntry(String plateNumber, FeeType feeType) {
 
 		List<ParkingEntry> entries = getStartedSessionsListByPlateNumber(plateNumber);
 
@@ -34,7 +34,7 @@ public class ParkingService {
 
 		} else {
 
-			ParkingEntry newEntry = new ParkingEntry(plateNumber);
+			ParkingEntry newEntry = new ParkingEntry(plateNumber, feeType);
 			parkingDao.save(newEntry);
 			return new ParkingEntryDto(plateNumber, new BigDecimal(0), SessionStatus.IN_PROGRESS);
 		}
@@ -52,7 +52,7 @@ public class ParkingService {
 
 			ParkingEntry updatedEntry = entries.get(0);
 			updatedEntry.setFinish(LocalDateTime.now());
-			// tu jeszcze policzymy fee
+			updatedEntry.setFee(feeCalculator.calculateFee(updatedEntry));
 			parkingDao.save(updatedEntry);
 			return new ParkingEntryDto(plateNumber, new BigDecimal(1), SessionStatus.FINISHED);
 
@@ -67,7 +67,7 @@ public class ParkingService {
 		if (entries.size() > 0) {
 			return Optional.ofNullable(entries.get(0).getStart());
 		} else {
-			return null;
+			return Optional.empty();
 		}
 	}
 
@@ -79,15 +79,9 @@ public class ParkingService {
 			BigDecimal feeSoFar = feeCalculator.calculateFee(entriesStarted.get(0));
 			return new ParkingEntryDto(plateNumber, feeSoFar, SessionStatus.IN_PROGRESS);
 		}
-
-		List<ParkingEntry> entriesFinished = getFinishedSessionsListByPlateNumber(plateNumber);
-
-		if (entriesFinished.size() > 0) {
-			ParkingEntry mostRecent = Collections.max(entriesFinished, Comparator.comparing(e -> e.getFinish()));
-			return new ParkingEntryDto(plateNumber, mostRecent.getFee(), SessionStatus.FINISHED);
-		}
-
-		throw new IllegalStateException("This vehicle has never parked");
+		
+		ParkingEntry mostRecent = getMostRecentFinishedSession(plateNumber);
+		return new ParkingEntryDto(plateNumber, mostRecent.getFee(), SessionStatus.FINISHED);
 
 	}
 
@@ -109,22 +103,34 @@ public class ParkingService {
 	
 	public DailySummaryDto getDailySummary() {
 		
+		LocalDateTime start = LocalDate.now().atStartOfDay();
+		LocalDateTime end = LocalDate.now().atTime(LocalTime.MAX);
 		
-		BigDecimal regularTurnover = feeCalculator.calculateDailyRegularTurnover(LocalDate.now());
-		BigDecimal vipTurnover = feeCalculator.calculateDailyVipTurnover(LocalDate.now());
+		List<ParkingEntry> regularEntries = parkingDao.findByFeeTypeAndFinishBetween(FeeType.REGULAR, start, end);
+		List<ParkingEntry> vipEntries = parkingDao.findByFeeTypeAndFinishBetween(FeeType.VIP, start, end);
+		
+		BigDecimal regularTurnover = feeCalculator.calculateDailyTurnover(regularEntries);
+		BigDecimal vipTurnover = feeCalculator.calculateDailyTurnover(vipEntries);
 		
 		return new DailySummaryDto(regularTurnover, vipTurnover);
 		
 	}
-	//////////////////////DO POPRAWIENIA////////////////////////////////
+	
+	
 	public DailySummaryDto getDailySummary(LocalDate date) {
 		
 		if (date.isAfter(LocalDate.now())) {
 			throw new IllegalArgumentException("The given day is in the future");
 		}
 		
-		BigDecimal regularTurnover = feeCalculator.calculateDailyRegularTurnover(date);
-		BigDecimal vipTurnover = feeCalculator.calculateDailyVipTurnover(date);
+		LocalDateTime start = date.atStartOfDay();
+		LocalDateTime end = date.atTime(LocalTime.MAX);
+		
+		List<ParkingEntry> regularEntries = parkingDao.findByFeeTypeAndFinishBetween(FeeType.REGULAR, start, end);
+		List<ParkingEntry> vipEntries = parkingDao.findByFeeTypeAndFinishBetween(FeeType.VIP, start, end);
+		
+		BigDecimal regularTurnover = feeCalculator.calculateDailyTurnover(regularEntries);
+		BigDecimal vipTurnover = feeCalculator.calculateDailyTurnover(vipEntries);
 		
 		return new DailySummaryDto(regularTurnover, vipTurnover);
 		
@@ -133,19 +139,24 @@ public class ParkingService {
 	private List<ParkingEntry> getStartedSessionsListByPlateNumber(String plateNumber) {
 
 		List<ParkingEntry> entries = parkingDao.findByPlateNumber(plateNumber);
-		List<ParkingEntry> entriesFiltered = entries.stream().filter(e -> (e.getFinish() == null))
-				.collect(Collectors.toList());
 
-		return entriesFiltered;
+		return entries.stream().filter(e -> (e.getFinish() == null))
+				.collect(Collectors.toList());
 	}
 
 	private List<ParkingEntry> getFinishedSessionsListByPlateNumber(String plateNumber) {
 
 		List<ParkingEntry> entries = parkingDao.findByPlateNumber(plateNumber);
-		List<ParkingEntry> entriesFiltered = entries.stream().filter(e -> (e.getFinish() != null))
-				.collect(Collectors.toList());
 
-		return entriesFiltered;
+		return entries.stream().filter(e -> (e.getFinish() != null))
+				.collect(Collectors.toList());
+	}
+	
+	private ParkingEntry getMostRecentFinishedSession(String plateNumber) {
+		return getFinishedSessionsListByPlateNumber(plateNumber).
+				stream().
+				max(Comparator.comparing(e -> e.getFinish())).
+				orElseThrow(() -> new IllegalStateException("This vehicle has never parked"));
 	}
 
 }
