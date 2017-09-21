@@ -62,17 +62,6 @@ public class ParkingService {
 
 	}
 
-	public Optional<LocalDateTime> checkIfVehicleStartedParkingSession(String plateNumber) {
-
-		List<ParkingEntry> entries = getStartedSessionsListByPlateNumber(plateNumber);
-
-		if (entries.size() > 0) {
-			return Optional.ofNullable(entries.get(0).getStart());
-		} else {
-			return Optional.empty();
-		}
-	}
-
 	public ParkingEntryDto getEntry(String plateNumber, String currency){
 
 		List<ParkingEntry> entriesStarted = getStartedSessionsListByPlateNumber(plateNumber);
@@ -86,8 +75,6 @@ public class ParkingService {
 			
 			return new ParkingEntryDto(plateNumber, feeSoFar, SessionStatus.IN_PROGRESS);
 		}
-		
-		System.out.println(currency);
 		
 		ParkingEntry mostRecent = getMostRecentFinishedSession(plateNumber);
 		BigDecimal fee = mostRecent.getFee();

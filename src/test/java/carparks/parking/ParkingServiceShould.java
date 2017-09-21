@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import carparks.parking.ParkingDao;
 import carparks.parking.ParkingService;
@@ -27,11 +28,11 @@ public class ParkingServiceShould {
 	@Mock
 	private FeeCalculator feeCalculator;
 	
-	@Mock
+	@Autowired
 	private Optional<List<CurrencyConverter>> converters;
 
 	@InjectMocks
-	private ParkingService parkingService = new ParkingService(parkingDao, feeCalculator,converters);
+	private ParkingService parkingService = new ParkingService(parkingDao, feeCalculator, converters);
 
 	@Before
 	public void setupMock() {
@@ -108,61 +109,22 @@ public class ParkingServiceShould {
 
 	}
 
-	@Test(expected = IllegalStateException.class)
+	@Test
 	public void throw_an_exception_when_trying_to_finish_parking_session_without_starting() {
 
 		// given
 		String plate = "WF12345";
 
 		// when
-		parkingService.tryToFinishParkingSession(plate);
+		try {
+			parkingService.tryToFinishParkingSession(plate);
+			fail();
+		} catch (IllegalStateException e) {
+			
+		}
 
 	}
 
-	@Test
-	public void return_date_if_parking_session_has_started() {
-
-		// given
-		String plate = "WF12345";
-		List<ParkingEntry> entries = Arrays.asList(new ParkingEntry(plate, FeeType.REGULAR));
-		when(parkingDao.findByPlateNumber(any())).thenReturn(entries);
-
-		// when
-		Optional<LocalDateTime> started = parkingService.checkIfVehicleStartedParkingSession(plate);
-
-		// then
-		assertNotNull(started);
-	}
-
-	@Test
-	public void return_null_if_parking_has_not_started() {
-
-		// given
-		String plate = "WF12345";
-
-		// when
-		Optional<LocalDateTime> started = parkingService.checkIfVehicleStartedParkingSession(plate);
-
-		// then
-		assertFalse(started.isPresent());
-	}
-
-	@Test
-	public void return_null_if_parking_started_and_finished() {
-
-		// given
-		String plate = "WF12345";
-		ParkingEntry entry = new ParkingEntry(plate, FeeType.REGULAR);
-		entry.setFinish(LocalDateTime.now());
-		List<ParkingEntry> entries = Arrays.asList(entry);
-		when(parkingDao.findByPlateNumber(any())).thenReturn(entries);
-
-		// when
-		Optional<LocalDateTime> started = parkingService.checkIfVehicleStartedParkingSession(plate);
-
-		// then
-		assertFalse(started.isPresent());
-	}
 
 	@Test
 	public void return_fee_when_checked_by_parking_entry_id_when_parking_finished() {

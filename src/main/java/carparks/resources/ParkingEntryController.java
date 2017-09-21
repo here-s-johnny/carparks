@@ -29,8 +29,6 @@ class ParkingEntryController {
 		this.service = service;
 	}
 	
-	// -------- More endpoints provided by Spring Data REST --------- //
-	
 	// ---------- Retrieve a parking entry by plate number ----------- //
 	@GetMapping(value = "/platenumber/{plateNumber}")
 	public ResponseEntity<?> getParkingEntryByPlateNumber(@PathVariable("plateNumber") String plateNumber,
