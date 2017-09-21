@@ -32,7 +32,7 @@ class ParkingEntryController {
 	// -------- More endpoints provided by Spring Data REST --------- //
 	
 	// ---------- Retrieve a parking entry by plate number ----------- //
-	@GetMapping(value = "/{plateNumber}")
+	@GetMapping(value = "/platenumber/{plateNumber}")
 	public ResponseEntity<?> getParkingEntryByPlateNumber(@PathVariable("plateNumber") String plateNumber,
 			@RequestParam(value = "currency", required = false, defaultValue = "PLN") String currency) {
 		
@@ -42,7 +42,7 @@ class ParkingEntryController {
 	}
 	
 	// ------------ Retrieve a parking entry by entry id ------------ //
-	@GetMapping(value = "/{entryId}")
+	@GetMapping(value = "/id/{entryId}")
 	public ResponseEntity<?> getParkingEntryByEntryId(@PathVariable("entryId") int id,
 			@RequestParam(value = "currency", required = false, defaultValue = "PLN") String currency) {
 		

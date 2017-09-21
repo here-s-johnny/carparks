@@ -17,12 +17,13 @@ public class ParkingService {
 
 	private ParkingDao parkingDao;
 	private FeeCalculator feeCalculator;
-	private List<CurrencyConverter> converters;
+	private Optional<List<CurrencyConverter>> converters;
 
-	@Autowired
-	public ParkingService(ParkingDao parkingDao, FeeCalculator feeCalculator, List<CurrencyConverter> converters) {
+	@Autowired(required=false)
+	public ParkingService(ParkingDao parkingDao, FeeCalculator feeCalculator, Optional<List<CurrencyConverter>> converters) {
 		this.parkingDao = parkingDao;
 		this.feeCalculator = feeCalculator;
+		this.converters = converters;
 	}
 
 	public ParkingEntryDto tryToCreateParkingEntry(String plateNumber, FeeType feeType) {
@@ -79,16 +80,18 @@ public class ParkingService {
 		if (entriesStarted.size() > 0) {
 			BigDecimal feeSoFar = feeCalculator.calculateFee(entriesStarted.get(0));
 			
-			if (currency != "PLN") {
+			if (!currency.equals("PLN")) {
 				feeSoFar = getConvertedValue(feeSoFar, currency);
 			}
 			
 			return new ParkingEntryDto(plateNumber, feeSoFar, SessionStatus.IN_PROGRESS);
 		}
 		
+		System.out.println(currency);
+		
 		ParkingEntry mostRecent = getMostRecentFinishedSession(plateNumber);
 		BigDecimal fee = mostRecent.getFee();
-		if (currency != "PLN") {
+		if (!currency.equals("PLN")) {
 			fee = getConvertedValue(fee, currency);
 		}
 		return new ParkingEntryDto(plateNumber, fee, SessionStatus.FINISHED);
@@ -111,7 +114,7 @@ public class ParkingService {
 			}
 			
 			BigDecimal fee = entry.getFee();
-			if (currency != "PLN") {
+			if (!currency.equals("PLN")) {
 				fee = getConvertedValue(fee, currency);
 			}
 			return new ParkingEntryDto(entry.getPlateNumber(), fee, SessionStatus.FINISHED);
@@ -131,7 +134,7 @@ public class ParkingService {
 		BigDecimal regularTurnover = feeCalculator.calculateDailyTurnover(regularEntries);
 		BigDecimal vipTurnover = feeCalculator.calculateDailyTurnover(vipEntries);
 		
-		if (currency != "PLN") {
+		if (!currency.equals("PLN")) {
 			regularTurnover = getConvertedValue(regularTurnover, currency);
 			vipTurnover = getConvertedValue(vipTurnover, currency);
 		}
@@ -156,7 +159,7 @@ public class ParkingService {
 		BigDecimal regularTurnover = feeCalculator.calculateDailyTurnover(regularEntries);
 		BigDecimal vipTurnover = feeCalculator.calculateDailyTurnover(vipEntries);
 		
-		if (currency != "PLN") {
+		if (!currency.equals("PLN")) {
 			regularTurnover = getConvertedValue(regularTurnover, currency);
 			vipTurnover = getConvertedValue(vipTurnover, currency);
 		}
@@ -190,7 +193,7 @@ public class ParkingService {
 	
 	private BigDecimal getConvertedValue(BigDecimal fee, String currency) {
 
-		Optional<CurrencyConverter> converter = converters.stream().filter(c -> c.supports(currency)).findFirst();
+		Optional<CurrencyConverter> converter = converters.get().stream().filter(c -> c.supports(currency)).findFirst();
 		if (!converter.isPresent()) {
 			throw new IllegalArgumentException("This currency is not supported yet");
 		} else {

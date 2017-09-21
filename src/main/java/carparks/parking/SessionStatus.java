@@ -1,6 +1,6 @@
 package carparks.parking;
 
-enum SessionStatus {
+public enum SessionStatus {
 	
 	IN_PROGRESS,
 	FINISHED

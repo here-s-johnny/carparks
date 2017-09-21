@@ -2,6 +2,7 @@ package carparks.parking;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -11,7 +12,9 @@ class FeeCalculator {
 
 	public BigDecimal calculateFee(ParkingEntry entry) {
 
-		Duration duration = Duration.between(entry.getStart(), entry.getFinish());
+		LocalDateTime start = entry.getStart();
+		LocalDateTime end = (entry.getFinish() == null) ? LocalDateTime.now() : entry.getFinish();
+		Duration duration = Duration.between(start, end);
 		
 		long durationInHours = duration.getSeconds() / 3600;
 		

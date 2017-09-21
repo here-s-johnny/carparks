@@ -28,7 +28,7 @@ public class ParkingServiceShould {
 	private FeeCalculator feeCalculator;
 	
 	@Mock
-	private List<CurrencyConverter> converters;
+	private Optional<List<CurrencyConverter>> converters;
 
 	@InjectMocks
 	private ParkingService parkingService = new ParkingService(parkingDao, feeCalculator,converters);
